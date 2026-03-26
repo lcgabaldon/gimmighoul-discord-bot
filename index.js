@@ -708,7 +708,7 @@ client.on('interactionCreate', async interaction => {
                     `\`/luckyfriend trainer: @TheirName\`\n` +
                     `When you're done, either trainer can use \`/closetrade\` in the thread to wrap it up!\n\n` +
                     `🎭 **Role Selection**\n` +
-                    `Head over to the role selection channel and react with the emojis to grab your ping roles and team roles. Remove a reaction to remove that role!\n\n` +
+                    `Head over to <#1486273648234074184> and react with the emojis to grab your ping roles and team roles. Remove a reaction to remove that role!\n\n` +
                     `*G1MM1GH0UL takes a bow, coins spilling out of his pockets, and scurries off to guard his treasure chest once more!* 🪙`
                 )
                 .setFooter({ text: 'El Paso Go!' })
