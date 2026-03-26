@@ -683,6 +683,46 @@ client.on('interactionCreate', async interaction => {
             }
         }
     }
+
+    if (interaction.commandName === 'postbotinfo') {
+        // Only Founder can run this command
+        const hasFounderRole = interaction.member.roles.cache.some(role => role.name === 'Founder');
+        if (!hasFounderRole) {
+            return interaction.reply({ content: 'You do not have permissions to use this command.', ephemeral: true });
+        }
+
+        try {
+            const targetChannel = interaction.options.getChannel('channel') || interaction.channel;
+
+            const botInfoEmbed = new EmbedBuilder()
+                .setColor('#FFD700')
+                .setTitle('🪙 Meet G1MM1GH0UL — Your Community Bot!')
+                .setDescription(
+                    `*G1MM1GH0UL hops onto a podium made of stacked gold coins, clears his throat, and proudly presents himself!*\n\n` +
+                    `**G1MM1GH0UL** is the official El Paso Go! community bot! Here's everything he can help you with:\n\n` +
+                    `🎟️ **Tickets — \`/ticket\`**\n` +
+                    `Need to reach the community admins privately? Use \`/ticket\` to open a private thread that only you and the admins can see. You can optionally include a topic:\n` +
+                    `\`/ticket topic: Question about meetups\`\n\n` +
+                    `✨ **Lucky Friend Trading — \`/luckyfriend\`**\n` +
+                    `Became Lucky Friends with someone in the server? Use \`/luckyfriend\` to open a private thread with just the two of you to coordinate your trade:\n` +
+                    `\`/luckyfriend trainer: @TheirName\`\n` +
+                    `When you're done, either trainer can use \`/closetrade\` in the thread to wrap it up!\n\n` +
+                    `🎭 **Role Selection**\n` +
+                    `Head over to the role selection channel and react with the emojis to grab your ping roles and team roles. Remove a reaction to remove that role!\n\n` +
+                    `*G1MM1GH0UL takes a bow, coins spilling out of his pockets, and scurries off to guard his treasure chest once more!* 🪙`
+                )
+                .setFooter({ text: 'El Paso Go!' })
+
+            await targetChannel.send({ embeds: [botInfoEmbed] });
+
+            await interaction.reply({ content: '✅ Bot info message posted!', ephemeral: true });
+        } catch (error) {
+            console.error('Error posting bot info:', error);
+            if (!interaction.replied) {
+                await interaction.reply({ content: 'An error occurred!', ephemeral: true });
+            }
+        }
+    }
 });
 
 // Login to Discord

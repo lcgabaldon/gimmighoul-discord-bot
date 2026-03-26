@@ -71,6 +71,15 @@ const commands = [
                 .setDescription('The channel to post in (defaults to current channel)')
                 .setRequired(false)
         ),
+    new SlashCommandBuilder()
+        .setName('postbotinfo')
+        .setDescription('Post a message explaining what G1MM1GH0UL bot can do')
+        .addChannelOption(option =>
+            option
+                .setName('channel')
+                .setDescription('The channel to post in (defaults to current channel)')
+                .setRequired(false)
+        ),
 ].map(command => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
