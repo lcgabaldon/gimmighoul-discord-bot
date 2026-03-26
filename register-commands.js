@@ -62,6 +62,15 @@ const commands = [
     new SlashCommandBuilder()
         .setName('closetrade')
         .setDescription('Close and archive the current Lucky Friend trade thread'),
+    new SlashCommandBuilder()
+        .setName('postroleselect')
+        .setDescription('Post the role selection message with reaction roles')
+        .addChannelOption(option =>
+            option
+                .setName('channel')
+                .setDescription('The channel to post in (defaults to current channel)')
+                .setRequired(false)
+        ),
 ].map(command => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);

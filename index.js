@@ -98,7 +98,17 @@ client.on('error', error => {
     console.error('Client error:', error);
 });
 
-// Reaction roles - when someone reacts with 🪙 on the rules message
+// Role selection emoji-to-role mapping
+const roleReactionMap = {
+    '📢': 'Event Ping',
+    '📍': 'Meetup Ping',
+    '🥊': 'PvP',
+    'TeamInstinct': 'Team Instinct',
+    'TeamMystic': 'Team Mystic',
+    'TeamValor': 'Team Valor',
+};
+
+// Reaction roles - when someone adds a reaction
 client.on('messageReactionAdd', async (reaction, user) => {
     // Ignore bot reactions
     if (user.bot) return;
@@ -113,27 +123,17 @@ client.on('messageReactionAdd', async (reaction, user) => {
         }
     }
 
-    // Check if this is the rules message
+    // Check if this is the rules message (Verified Trainer)
     const rulesMessageId = process.env.RULES_MESSAGE_ID;
-    if (!rulesMessageId) {
-        console.log('RULES_MESSAGE_ID not set in .env file');
-        return;
-    }
-
-    // Check if reaction is on the rules message and is the coin emoji
-    if (reaction.message.id === rulesMessageId && reaction.emoji.name === '🪙') {
+    if (rulesMessageId && reaction.message.id === rulesMessageId && reaction.emoji.name === '🪙') {
         const member = await reaction.message.guild.members.fetch(user.id);
-        if (!member) {
-            console.log('Member not found');
-            return;
-        }
+        if (!member) return;
 
-        // Get the Verified role
         const verifiedRoleName = process.env.VERIFIED_ROLE_NAME || 'Verified Trainer';
         const verifiedRole = reaction.message.guild.roles.cache.find(role => role.name === verifiedRoleName);
 
         if (!verifiedRole) {
-            console.error(`Role "${verifiedRoleName}" not found! Create this role or update VERIFIED_ROLE_NAME in .env`);
+            console.error(`Role "${verifiedRoleName}" not found!`);
             return;
         }
 
@@ -142,6 +142,70 @@ client.on('messageReactionAdd', async (reaction, user) => {
             console.log(`✅ Gave ${verifiedRoleName} role to ${user.tag}`);
         } catch (error) {
             console.error('Error adding role:', error);
+        }
+    }
+
+    // Check if this is the role selection message
+    const rolesMessageId = process.env.ROLES_MESSAGE_ID;
+    if (rolesMessageId && reaction.message.id === rolesMessageId) {
+        const emojiKey = reaction.emoji.id ? reaction.emoji.name : reaction.emoji.name;
+        const roleName = roleReactionMap[emojiKey];
+
+        if (!roleName) return;
+
+        const member = await reaction.message.guild.members.fetch(user.id);
+        if (!member) return;
+
+        const role = reaction.message.guild.roles.cache.find(r => r.name === roleName);
+        if (!role) {
+            console.error(`Role "${roleName}" not found!`);
+            return;
+        }
+
+        try {
+            await member.roles.add(role);
+            console.log(`✅ Gave ${roleName} role to ${user.tag}`);
+        } catch (error) {
+            console.error('Error adding role:', error);
+        }
+    }
+});
+
+// Reaction roles - when someone removes a reaction
+client.on('messageReactionRemove', async (reaction, user) => {
+    if (user.bot) return;
+
+    if (reaction.partial) {
+        try {
+            await reaction.fetch();
+        } catch (error) {
+            console.error('Error fetching reaction:', error);
+            return;
+        }
+    }
+
+    // Check if this is the role selection message
+    const rolesMessageId = process.env.ROLES_MESSAGE_ID;
+    if (rolesMessageId && reaction.message.id === rolesMessageId) {
+        const emojiKey = reaction.emoji.id ? reaction.emoji.name : reaction.emoji.name;
+        const roleName = roleReactionMap[emojiKey];
+
+        if (!roleName) return;
+
+        const member = await reaction.message.guild.members.fetch(user.id);
+        if (!member) return;
+
+        const role = reaction.message.guild.roles.cache.find(r => r.name === roleName);
+        if (!role) {
+            console.error(`Role "${roleName}" not found!`);
+            return;
+        }
+
+        try {
+            await member.roles.remove(role);
+            console.log(`❌ Removed ${roleName} role from ${user.tag}`);
+        } catch (error) {
+            console.error('Error removing role:', error);
         }
     }
 });
@@ -561,6 +625,64 @@ client.on('interactionCreate', async interaction => {
             console.error('Error closing trade thread:', error);
             if (!interaction.replied) {
                 await interaction.reply({ content: 'An error occurred closing this trade thread!', ephemeral: true });
+            }
+        }
+    }
+
+    if (interaction.commandName === 'postroleselect') {
+        // Only Founder can run this command
+        const hasFounderRole = interaction.member.roles.cache.some(role => role.name === 'Founder');
+        if (!hasFounderRole) {
+            return interaction.reply({ content: 'You do not have permissions to use this command.', ephemeral: true });
+        }
+
+        try {
+            const targetChannel = interaction.options.getChannel('channel') || interaction.channel;
+
+            // Get custom emojis from the server
+            const elPasoGoLogo = interaction.guild.emojis.cache.find(e => e.name === 'ElPasoGoLogo');
+            const teamInstinct = interaction.guild.emojis.cache.find(e => e.name === 'TeamInstinct');
+            const teamMystic = interaction.guild.emojis.cache.find(e => e.name === 'TeamMystic');
+            const teamValor = interaction.guild.emojis.cache.find(e => e.name === 'TeamValor');
+
+            const rolesEmbed = new EmbedBuilder()
+                .setColor('#FFD700')
+                .setDescription(
+                    `${elPasoGoLogo || '🪙'} **Roles & Pings**\n` +
+                    `Customize your El Paso Go! experience by choosing the roles you want and opt in/out of certain text channels & pings!\n\n` +
+                    `❗ **Ping Roles**\n` +
+                    `**Event Ping** for important server updates 📢\n` +
+                    `**Meetup Ping** for Campfire meetup alerts 📍\n` +
+                    `**PvP** for PvP discussions and battle talk 🥊\n\n` +
+                    `🏳️ **Team Roles**\n` +
+                    `Team Instinct ${teamInstinct || '⚡'}\n` +
+                    `Team Mystic ${teamMystic || '❄️'}\n` +
+                    `Team Valor ${teamValor || '🔥'}\n\n` +
+                    `*G1MM1GH0UL lays out a selection of shiny badges on the ground in front of you, each one glowing with a different light...*\n\n` +
+                    `React below with the corresponding emoji to grab your roles! Remove your reaction to remove the role.`
+                )
+                .setFooter({ text: 'El Paso Go! • Role Selection' })
+
+            const rolesMessage = await targetChannel.send({ embeds: [rolesEmbed] });
+
+            // Add all reaction emojis to the message
+            await rolesMessage.react('📢');
+            await rolesMessage.react('📍');
+            await rolesMessage.react('🥊');
+            if (teamInstinct) await rolesMessage.react(teamInstinct);
+            if (teamMystic) await rolesMessage.react(teamMystic);
+            if (teamValor) await rolesMessage.react(teamValor);
+
+            console.log(`\n⚠️  IMPORTANT: Add this to your .env file:\nROLES_MESSAGE_ID=${rolesMessage.id}\n`);
+
+            await interaction.reply({
+                content: `✅ Role selection posted!\n\n**IMPORTANT:** Add this to your \`.env\` file:\n\`\`\`\nROLES_MESSAGE_ID=${rolesMessage.id}\n\`\`\`\nThen restart the bot for reaction roles to work!`,
+                ephemeral: true
+            });
+        } catch (error) {
+            console.error('Error posting role selection:', error);
+            if (!interaction.replied) {
+                await interaction.reply({ content: 'An error occurred!', ephemeral: true });
             }
         }
     }
