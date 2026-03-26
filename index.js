@@ -672,9 +672,6 @@ client.on('interactionCreate', async interaction => {
             if (teamInstinct) await rolesMessage.react(teamInstinct);
             if (teamMystic) await rolesMessage.react(teamMystic);
             if (teamValor) await rolesMessage.react(teamValor);
-
-            console.log(`\n⚠️  IMPORTANT: Add this to your .env file:\nROLES_MESSAGE_ID=${rolesMessage.id}\n`);
-
             await interaction.reply({
                 content: `✅ Role selection posted!\n\n**IMPORTANT:** Add this to your \`.env\` file:\n\`\`\`\nROLES_MESSAGE_ID=${rolesMessage.id}\n\`\`\`\nThen restart the bot for reaction roles to work!`,
                 ephemeral: true
